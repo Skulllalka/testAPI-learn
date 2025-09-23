@@ -61,3 +61,11 @@ func (l *List) ListNotCompletedTasks() map[string]Task {
 	}
 	return notCompletedTasks
 }
+
+func (l *List) GetTask(title string) (Task, error) {
+	task, ok := l.tasks[title]
+	if !ok {
+		return Task{}, ErrTaskNotFound
+	}
+	return task, nil
+}

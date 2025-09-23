@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 type HTTPHandlers struct {
@@ -60,7 +62,28 @@ func (h *HTTPHandlers) HandleCreateTask(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *HTTPHandlers) HandleGetTask(w http.ResponseWriter, r *http.Request) {
+	title := mux.Vars(r)["title"]
+	task, err := h.todoList.GetTask(title)
+	if err != nil {
+		errDTO := ErrorDTO{
+			Message: err.Error(),
+			Time:    time.Now(),
+		}
+		if errors.Is(err, todo.ErrTaskNotFound) {
+			http.Error(w, errDTO.ToString(), http.StatusNotFound)
+		} else {
+			http.Error(w, errDTO.ToString(), http.StatusInternalServerError)
+		}
+	}
 
+	b, err := json.MarshalIndent(task, "", "     ")
+	if err != nil {
+		panic(err)
+	}
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(b); err != nil {
+		fmt.Println("failed to write string: ", err)
+	}
 }
 
 func (h *HTTPHandlers) HandleGetAllTasks(w http.ResponseWriter, r *http.Request) {
